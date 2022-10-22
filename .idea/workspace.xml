@@ -4,8 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b5bce3d0-1861-4a7f-ac16-6ef3c887ef8a" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/App.py" beforeDir="false" afterPath="$PROJECT_DIR$/App.py" afterDir="false" />
+    <list default="true" id="b5bce3d0-1861-4a7f-ac16-6ef3c887ef8a" name="Changes" comment="Sharpen Filter Kernel Updates&#10;Minor changes">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,6 +41,14 @@
       <option name="presentableId" value="Default" />
       <updated>1666408551840</updated>
     </task>
+    <task id="LOCAL-00001" summary="Sharpen Filter Kernel Updates&#10;Minor changes">
+      <created>1666412864258</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1666412864258</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -53,5 +61,9 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Sharpen Filter Kernel Updates&#10;Minor changes" />
+    <option name="LAST_COMMIT_MESSAGE" value="Sharpen Filter Kernel Updates&#10;Minor changes" />
   </component>
 </project>
