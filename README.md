@@ -25,7 +25,7 @@ opencv/cv2
 
 ## Things to add: 
 
-[] Sharpness Editor
-[] More colors for drawing,
-[] Point Zoom In/Out,
-[] Undo/Redo options,
+[ ] Sharpness Editor
+[ ] More colors for drawing,
+[ ] Point Zoom In/Out,
+[ ] Undo/Redo options,
