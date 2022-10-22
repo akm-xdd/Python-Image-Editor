@@ -323,6 +323,8 @@ class EditBar(Frame):
                     self.master.image_viewer.deactivate_draw()
                 if self.master.is_crop_state:
                     self.master.image_viewer.deactivate_crop()
+        else:
+            self.master.image_viewer.activate_zoom()
 
 class ImageViewer(Frame):
 
@@ -402,6 +404,9 @@ class ImageViewer(Frame):
         self.canvas.unbind("<ButtonRelease>")
 
         self.master.is_crop_state = False
+
+    def deactivate_zoom(self):
+        pass
 
     def start_draw(self, event):
         self.x = event.x
