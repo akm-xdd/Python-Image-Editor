@@ -11,6 +11,8 @@ numpy
 opencv/cv2
 
 
+
+
 ## RAW SCREENSHOTS
 
 ![image](https://user-images.githubusercontent.com/110248822/197221590-0711956e-2d82-447f-8dec-3dd7ca8ca776.png)
@@ -23,7 +25,7 @@ opencv/cv2
 
 ## Things to add: 
 
-~~Sharpness Editor~~
-More colors for drawing
-Point Zoom In/Out
-Undo/Redo options
+[] Sharpness Editor
+[] More colors for drawing,
+[] Point Zoom In/Out,
+[] Undo/Redo options,
