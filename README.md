@@ -11,7 +11,7 @@ numpy
 opencv/cv2
 
 
-RAW SCREENSHOTS
+## RAW SCREENSHOTS
 
 ![image](https://user-images.githubusercontent.com/110248822/197221590-0711956e-2d82-447f-8dec-3dd7ca8ca776.png)
 ![image](https://user-images.githubusercontent.com/110248822/197221606-009e5f56-fa75-471e-baf2-cd14b67fd563.png)
@@ -21,7 +21,7 @@ RAW SCREENSHOTS
 
 
 
-Things to add: 
+## Things to add: 
 
 Sharpness Editor
 More colors for drawing
