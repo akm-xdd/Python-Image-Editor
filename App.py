@@ -27,14 +27,14 @@ class AdjustFrame(Toplevel):
         self.b_label = Label(self, text="B")
         self.b_scale = Scale(self, from_=-100, to_=100, length=250, resolution=1,
                              orient=HORIZONTAL)
+        self.ok_button = Button(self, text="OK")
         self.apply_button = Button(self, text="Apply")
-        self.preview_button = Button(self, text="Preview")
         self.cancel_button = Button(self, text="Cancel")
 
         self.brightness_scale.set(1)
 
-        self.apply_button.bind("<ButtonRelease>", self.apply_button_released)
-        self.preview_button.bind("<ButtonRelease>", self.show_button_release)
+        self.ok_button.bind("<ButtonRelease>", self.ok_button_released)
+        self.apply_button.bind("<ButtonRelease>", self.show_button_release)
         self.cancel_button.bind("<ButtonRelease>", self.cancel_button_released)
 
         self.brightness_label.pack()
@@ -46,10 +46,10 @@ class AdjustFrame(Toplevel):
         self.b_label.pack()
         self.b_scale.pack()
         self.cancel_button.pack(side=RIGHT)
-        self.preview_button.pack(side=RIGHT)
-        self.apply_button.pack()
+        self.apply_button.pack(side=RIGHT)
+        self.ok_button.pack()
 
-    def apply_button_released(self, event):
+    def ok_button_released(self, event):
         self.master.processed_image = self.processing_image
         self.close()
 
@@ -89,15 +89,17 @@ class FilterFrame(Toplevel):
         self.sepia_button = Button(master=self, text="Sepia")
         self.emboss_button = Button(master=self, text="Emboss")
         self.gaussian_blur_button = Button(master=self, text="Gaussian Blur")
+        self.sharpen_button = Button(master=self, text="Sharpen")
         self.cancel_button = Button(master=self, text="Cancel")
-        self.apply_button = Button(master=self, text="Apply")
+        self.ok_button = Button(master=self, text="OK")
 
         self.negative_button.bind("<ButtonRelease>", self.negative_button_released)
         self.black_white_button.bind("<ButtonRelease>", self.black_white_released)
         self.sepia_button.bind("<ButtonRelease>", self.sepia_button_released)
         self.emboss_button.bind("<ButtonRelease>", self.emboss_button_released)
         self.gaussian_blur_button.bind("<ButtonRelease>", self.gaussian_blur_button_released)
-        self.apply_button.bind("<ButtonRelease>", self.apply_button_released)
+        self.sharpen_button.bind("<ButtonRelease>", self.sharpen_button_released)
+        self.ok_button.bind("<ButtonRelease>", self.ok_button_released)
         self.cancel_button.bind("<ButtonRelease>", self.cancel_button_released)
 
         self.negative_button.pack()
@@ -105,8 +107,9 @@ class FilterFrame(Toplevel):
         self.sepia_button.pack()
         self.emboss_button.pack()
         self.gaussian_blur_button.pack()
+        self.sharpen_button.pack()
         self.cancel_button.pack(side=RIGHT)
-        self.apply_button.pack()
+        self.ok_button.pack()
 
     def negative_button_released(self, event):
         self.negative()
@@ -128,8 +131,11 @@ class FilterFrame(Toplevel):
         self.gaussian_blur()
         self.show_image()
 
+    def sharpen_button_released(self, event):
+        self.sharpen()
+        self.show_image()
 
-    def apply_button_released(self, event):
+    def ok_button_released(self, event):
         self.master.processed_image = self.filtered_image
         self.show_image()
         self.close()
@@ -165,6 +171,12 @@ class FilterFrame(Toplevel):
     def gaussian_blur(self):
         self.filtered_image = cv2.GaussianBlur(self.original_image, (41, 41), 0)
 
+    def sharpen(self):
+        kernel = np.array([[-1,-1,-1],
+                           [-1,9,-1],
+                           [-1,-1,-1]])
+        self.filtered_image = cv2.filter2D(self.original_image, -1, kernel)
+
     def close(self):
         self.destroy()
 class EditBar(Frame):
@@ -179,8 +191,7 @@ class EditBar(Frame):
         self.crop_button = Button(self, text="Crop")
         self.filter_button = Button(self, text="Filter")
         self.adjust_button = Button(self, text="Adjust")
-        self.zoom_in_button = Button(self, text="Zoom In")
-        self.zoom_out_button = Button(self, text="Zoom Out")
+        self.zoom_button = Button(self, text="Zoom")
         self.clear_button = Button(self, text="Clear")
 
         self.import_button.bind("<ButtonRelease>", self.import_button_released)
@@ -190,8 +201,7 @@ class EditBar(Frame):
         self.crop_button.bind("<ButtonRelease>", self.crop_button_released)
         self.filter_button.bind("<ButtonRelease>", self.filter_button_released)
         self.adjust_button.bind("<ButtonRelease>", self.adjust_button_released)
-        self.zoom_out_button.bind("<ButtonRelease>", self.zoom_out_button_released)
-        self.zoom_in_button.bind("<ButtonRelease>", self.zoom_in_button_released)
+        self.zoom_button.bind("<ButtonRelease>", self.zoom_button_released)
         self.clear_button.bind("<ButtonRelease>", self.clear_button_released)
 
 
@@ -202,8 +212,7 @@ class EditBar(Frame):
         self.crop_button.pack(side=LEFT)
         self.filter_button.pack(side=LEFT)
         self.adjust_button.pack(side=LEFT)
-        self.zoom_in_button.pack(side=LEFT)
-        self.zoom_out_button.pack(side=LEFT)
+        self.zoom_button.pack(side=LEFT)
         self.clear_button.pack()
 
 
@@ -306,16 +315,9 @@ class EditBar(Frame):
                 self.master.processed_image = self.master.original_image.copy()
                 self.master.image_viewer.show_image()
 
-    def zoom_in_button_released(self,event):
-        if self.winfo_containing(event.x_root, event.y_root) == self.zoom_in_button:
-            if self.master.is_image_selected:
-                if self.master.is_draw_state:
-                    self.master.image_viewer.deactivate_draw()
-                if self.master.is_crop_state:
-                    self.master.image_viewer.deactivate_crop()
 
-    def zoom_out_button_released(self,event):
-        if self.winfo_containing(event.x_root, event.y_root) == self.zoom_out_button:
+    def zoom_button_released(self,event):
+        if self.winfo_containing(event.x_root, event.y_root) == self.zoom_button:
             if self.master.is_image_selected:
                 if self.master.is_draw_state:
                     self.master.image_viewer.deactivate_draw()
@@ -385,11 +387,8 @@ class ImageViewer(Frame):
 
         self.master.is_crop_state = True
 
-    def activate_zoom_out(self):
-       self.canvas.bind("<ButtonPress>",self.start_zoom_out())
-
-    def activate_zoom_in(self):
-       self.canvas.bind("<ButtonPress>",self.start_zoom_in())
+    def activate_zoom(self):
+       pass
 
     def deactivate_draw(self):
         self.canvas.unbind("<ButtonPress>")
@@ -469,10 +468,7 @@ class ImageViewer(Frame):
     def clear_draw(self):
         self.canvas.delete(self.draw_ids)
 
-    def start_zoom_in(self):
-        pass
-
-    def start_zoom_out(self):
+    def start_zoom(self):
         pass
 
 class Main(tk.Tk):
