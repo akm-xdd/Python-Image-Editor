@@ -1,515 +1,611 @@
-from tkinter import Toplevel, Label, Scale, Button, HORIZONTAL, RIGHT,Frame, Canvas, CENTER, ROUND, Frame, Button, LEFT, filedialog, ttk, colorchooser
-import cv2
-import numpy as np
-from PIL import Image, ImageTk
-import tkinter as tk
-
-class AdjustFrame(Toplevel):
-
-    def __init__(self, master=None):
-        Toplevel.__init__(self, master=master)
-
-        self.brightness_value = 0
-        self.previous_brightness_value = 0
-
-        self.original_image = self.master.processed_image
-        self.processing_image = self.master.processed_image
-
-        self.brightness_label = Label(self, text="Brightness")
-        self.brightness_scale = Scale(self, from_=0, to_=2, length=250, resolution=0.1,
-                                      orient=HORIZONTAL)
-        self.r_label = Label(self, text="R")
-        self.r_scale = Scale(self, from_=-100, to_=100, length=250, resolution=1,
-                             orient=HORIZONTAL)
-        self.g_label = Label(self, text="G")
-        self.g_scale = Scale(self, from_=-100, to_=100, length=250, resolution=1,
-                             orient=HORIZONTAL)
-        self.b_label = Label(self, text="B")
-        self.b_scale = Scale(self, from_=-100, to_=100, length=250, resolution=1,
-                             orient=HORIZONTAL)
-        self.ok_button = Button(self, text="OK")
-        self.apply_button = Button(self, text="Apply")
-        self.cancel_button = Button(self, text="Cancel")
-
-        self.brightness_scale.set(1)
-
-        self.ok_button.bind("<ButtonRelease>", self.ok_button_released)
-        self.apply_button.bind("<ButtonRelease>", self.show_button_release)
-        self.cancel_button.bind("<ButtonRelease>", self.cancel_button_released)
-
-        self.brightness_label.pack()
-        self.brightness_scale.pack()
-        self.r_label.pack()
-        self.r_scale.pack()
-        self.g_label.pack()
-        self.g_scale.pack()
-        self.b_label.pack()
-        self.b_scale.pack()
-        self.cancel_button.pack(side=RIGHT)
-        self.apply_button.pack(side=RIGHT)
-        self.ok_button.pack()
-
-    def ok_button_released(self, event):
-        self.master.processed_image = self.processing_image
-        self.close()
-
-    def show_button_release(self, event):
-        self.processing_image = cv2.convertScaleAbs(self.original_image, alpha=self.brightness_scale.get())
-        b, g, r = cv2.split(self.processing_image)
-
-        for b_value in b:
-            cv2.add(b_value, self.b_scale.get(), b_value)
-        for g_value in g:
-            cv2.add(g_value, self.g_scale.get(), g_value)
-        for r_value in r:
-            cv2.add(r_value, self.r_scale.get(), r_value)
-
-        self.processing_image = cv2.merge((b, g, r))
-        self.show_image(self.processing_image)
-
-    def cancel_button_released(self, event):
-        self.close()
-
-    def show_image(self, img=None):
-        self.master.image_viewer.show_image(img=img)
-
-    def close(self):
-        self.show_image()
-        self.destroy()
-class FilterFrame(Toplevel):
-
-    def __init__(self, master=None):
-        Toplevel.__init__(self, master=master)
-
-        self.original_image = self.master.processed_image
-        self.filtered_image = None
-
-        self.negative_button = Button(master=self, text="Negative")
-        self.black_white_button = Button(master=self, text="Black White")
-        self.sepia_button = Button(master=self, text="Sepia")
-        self.emboss_button = Button(master=self, text="Emboss")
-        self.gaussian_blur_button = Button(master=self, text="Gaussian Blur")
-        self.sharpen_button = Button(master=self, text="Sharpen")
-        self.cancel_button = Button(master=self, text="Cancel")
-        self.ok_button = Button(master=self, text="OK")
-
-        self.negative_button.bind("<ButtonRelease>", self.negative_button_released)
-        self.black_white_button.bind("<ButtonRelease>", self.black_white_released)
-        self.sepia_button.bind("<ButtonRelease>", self.sepia_button_released)
-        self.emboss_button.bind("<ButtonRelease>", self.emboss_button_released)
-        self.gaussian_blur_button.bind("<ButtonRelease>", self.gaussian_blur_button_released)
-        self.sharpen_button.bind("<ButtonRelease>", self.sharpen_button_released)
-        self.ok_button.bind("<ButtonRelease>", self.ok_button_released)
-        self.cancel_button.bind("<ButtonRelease>", self.cancel_button_released)
-
-        self.negative_button.pack()
-        self.black_white_button.pack()
-        self.sepia_button.pack()
-        self.emboss_button.pack()
-        self.gaussian_blur_button.pack()
-        self.sharpen_button.pack()
-        self.cancel_button.pack(side=RIGHT)
-        self.ok_button.pack()
-
-    def negative_button_released(self, event):
-        self.negative()
-        self.show_image()
-
-    def black_white_released(self, event):
-        self.black_white()
-        self.show_image()
-
-    def sepia_button_released(self, event):
-        self.sepia()
-        self.show_image()
-
-    def emboss_button_released(self, event):
-        self.emboss()
-        self.show_image()
-
-    def gaussian_blur_button_released(self, event):
-        self.gaussian_blur()
-        self.show_image()
-
-    def sharpen_button_released(self, event):
-        self.sharpen()
-        self.show_image()
-
-    def ok_button_released(self, event):
-        self.master.processed_image = self.filtered_image
-        self.show_image()
-        self.close()
-
-    def cancel_button_released(self, event):
-        self.master.image_viewer.show_image()
-        self.close()
-
-    def show_image(self):
-        self.master.image_viewer.show_image(img=self.filtered_image)
-
-    def negative(self):
-        self.filtered_image = cv2.bitwise_not(self.original_image)
-
-    def black_white(self):
-        self.filtered_image = cv2.cvtColor(self.original_image, cv2.COLOR_BGR2GRAY)
-        self.filtered_image = cv2.cvtColor(self.filtered_image, cv2.COLOR_GRAY2BGR)
-
-    def sepia(self):
-        kernel = np.array([[0.272, 0.534, 0.131],
-                           [0.349, 0.686, 0.168],
-                           [0.393, 0.769, 0.189]])
-
-        self.filtered_image = cv2.filter2D(self.original_image, -1, kernel)
-
-    def emboss(self):
-        kernel = np.array([[0, -1, -1],
-                           [1, 0, -1],
-                           [1, 1, 0]])
-
-        self.filtered_image = cv2.filter2D(self.original_image, -1, kernel)
-
-    def gaussian_blur(self):
-        self.filtered_image = cv2.GaussianBlur(self.original_image, (41, 41), 0)
-
-    def sharpen(self):
-        kernel = np.array([[-1,-1,-1],
-                           [-1,9,-1],
-                           [-1,-1,-1]])
-        self.filtered_image = cv2.filter2D(self.original_image, -1, kernel)
-
-    def close(self):
-        self.destroy()
-
-
-class EditBar(Frame):
-
-    def __init__(self, master=None):
-        Frame.__init__(self, master=master)
-
-        self.import_button = Button(self, text="Import")
-        self.save_button = Button(self, text="Save")
-        self.export_button = Button(self, text="Export")
-        self.draw_button = Button(self, text="Draw")
-        self.crop_button = Button(self, text="Crop")
-        self.filter_button = Button(self, text="Filter")
-        self.adjust_button = Button(self, text="Adjust")
-        self.zoom_button = Button(self, text="Zoom")
-        self.clear_button = Button(self, text="Clear")
-
-        self.import_button.bind("<ButtonRelease>", self.import_button_released)
-        self.save_button.bind("<ButtonRelease>", self.save_button_released)
-        self.export_button.bind("<ButtonRelease>", self.export_button_released)
-        self.draw_button.bind("<ButtonRelease>", self.draw_button_released)
-        self.crop_button.bind("<ButtonRelease>", self.crop_button_released)
-        self.filter_button.bind("<ButtonRelease>", self.filter_button_released)
-        self.adjust_button.bind("<ButtonRelease>", self.adjust_button_released)
-        self.zoom_button.bind("<ButtonRelease>", self.zoom_button_released)
-        self.clear_button.bind("<ButtonRelease>", self.clear_button_released)
-
-
-        self.import_button.pack(side=LEFT)
-        self.save_button.pack(side=LEFT)
-        self.export_button.pack(side=LEFT)
-        self.draw_button.pack(side=LEFT)
-        self.crop_button.pack(side=LEFT)
-        self.filter_button.pack(side=LEFT)
-        self.adjust_button.pack(side=LEFT)
-        self.zoom_button.pack(side=LEFT)
-        self.clear_button.pack()
-
-
-    def import_button_released(self, event):
-        if self.winfo_containing(event.x_root, event.y_root) == self.import_button:
-            if self.master.is_draw_state:
-                self.master.image_viewer.deactivate_draw()
-            if self.master.is_crop_state:
-                self.master.image_viewer.deactivate_crop()
-
-            filename = filedialog.askopenfilename()
-            image = cv2.imread(filename)
-
-            if image is not None:
-                self.master.filename = filename
-                self.master.original_image = image.copy()
-                self.master.processed_image = image.copy()
-                self.master.image_viewer.show_image()
-                self.master.is_image_selected = True
-
-    def save_button_released(self, event):
-        if self.winfo_containing(event.x_root, event.y_root) == self.save_button:
-            if self.master.is_image_selected:
-                if self.master.is_crop_state:
-                    self.master.image_viewer.deactivate_crop()
-                if self.master.is_draw_state:
-                    self.master.image_viewer.deactivate_draw()
-
-                save_image = self.master.processed_image
-                image_filename = self.master.filename
-                cv2.imwrite(image_filename, save_image)
-
-    def export_button_released(self, event):
-        if self.winfo_containing(event.x_root, event.y_root) == self.export_button:
-            if self.master.is_image_selected:
-                if self.master.is_draw_state:
-                    self.master.image_viewer.deactivate_draw()
-                if self.master.is_crop_state:
-                    self.master.image_viewer.deactivate_crop()
-
-                original_file_type = self.master.filename.split('.')[-1]
-                filename = filedialog.asksaveasfilename()
-                filename = filename + "." + original_file_type
-
-                save_image = self.master.processed_image
-                cv2.imwrite(filename, save_image)
-
-                self.master.filename = filename
-
-    def draw_button_released(self, event):
-        if self.winfo_containing(event.x_root, event.y_root) == self.draw_button:
-            if self.master.is_image_selected:
-                if self.master.is_crop_state:
-                    self.master.image_viewer.deactivate_crop()
-                if self.master.is_draw_state:
-                    self.master.image_viewer.deactivate_draw()
-                else:
-                    self.master.image_viewer.activate_draw()
-
-    def crop_button_released(self, event):
-        if self.winfo_containing(event.x_root, event.y_root) == self.crop_button:
-            if self.master.is_image_selected:
-                if self.master.is_draw_state:
-                    self.master.image_viewer.deactivate_draw()
-                if self.master.is_crop_state:
-                    self.master.image_viewer.deactivate_crop()
-                else:
-                    self.master.image_viewer.activate_crop()
-
-    def filter_button_released(self, event):
-        if self.winfo_containing(event.x_root, event.y_root) == self.filter_button:
-            if self.master.is_image_selected:
-                if self.master.is_draw_state:
-                    self.master.image_viewer.deactivate_draw()
-                if self.master.is_crop_state:
-                    self.master.image_viewer.deactivate_crop()
-
-                self.master.filter_frame = FilterFrame(master=self.master)
-                self.master.filter_frame.grab_set()
-
-    def adjust_button_released(self, event):
-        if self.winfo_containing(event.x_root, event.y_root) == self.adjust_button:
-            if self.master.is_image_selected:
-                if self.master.is_draw_state:
-                    self.master.image_viewer.deactivate_draw()
-                if self.master.is_crop_state:
-                    self.master.image_viewer.deactivate_crop()
-
-                self.master.adjust_frame = AdjustFrame(master=self.master)
-                self.master.adjust_frame.grab_set()
-
-    def clear_button_released(self, event):
-        if self.winfo_containing(event.x_root, event.y_root) == self.clear_button:
-            if self.master.is_image_selected:
-                if self.master.is_draw_state:
-                    self.master.image_viewer.deactivate_draw()
-                if self.master.is_crop_state:
-                    self.master.image_viewer.deactivate_crop()
-
-                self.master.processed_image = self.master.original_image.copy()
-                self.master.image_viewer.show_image()
-
-
-    def zoom_button_released(self,event):
-        if self.winfo_containing(event.x_root, event.y_root) == self.zoom_button:
-            if self.master.is_image_selected:
-                if self.master.is_draw_state:
-                    self.master.image_viewer.deactivate_draw()
-                if self.master.is_crop_state:
-                    self.master.image_viewer.deactivate_crop()
-
-
-class Draw(Toplevel):
-
-    def __int__(self, master=None):
-        self.color = colorchooser.askcolor()
-        Toplevel.__init__(self, master=master)
-
-
-    '''def activate_draw(self):
-        self.canvas.bind("<ButtonPress>", self.start_draw)
-        self.canvas.bind("<B1-Motion>", self.draw)
-
-        self.master.is_draw_state = True
-
-    def deactivate_draw(self):
-        self.canvas.unbind("<ButtonPress>")
-        self.canvas.unbind("<B1-Motion>")
-
-        self.master.is_draw_state = False
-
-    def start_draw(self, event):
-        self.x = event.x
-        self.y = event.y
-
-    def draw(self, event):
-        self.draw_ids.append(self.canvas.create_line(self.x, self.y, event.x, event.y, width=2,
-                                                     fill=self.color, capstyle=ROUND, smooth=True))
-
-        cv2.line(self.master.processed_image, (int(self.x * self.ratio), int(self.y * self.ratio)),
-                 (int(event.x * self.ratio), int(event.y * self.ratio)),
-                 (0, 0, 255), thickness=int(self.ratio * 2),
-                 lineType=8)
-
-        self.x = event.x
-        self.y = event.y'''
-
-
-class ImageViewer(Frame, Draw):
-
-    def __init__(self, master=None):
-        Frame.__init__(self, master=master, bg="gray", width=600, height=400)
-
-        self.shown_image = None
-        self.x = 0
-        self.y = 0
-        self.crop_start_x = 0
-        self.crop_start_y = 0
-        self.crop_end_x = 0
-        self.crop_end_y = 0
-        self.draw_ids = list()
-        self.rectangle_id = 0
-        self.ratio = 0
-
-        self.canvas = Canvas(self, bg="white", width=600, height=400)
-        self.canvas.place(relx=0.5, rely=0.5, anchor=CENTER)
-
-    def show_image(self, img=None):
-        self.clear_canvas()
-
-        if img is None:
-            image = self.master.processed_image.copy()
-        else:
-            image = img
-
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        height, width, channels = image.shape
-        ratio = height / width
-
-        new_width = width
-        new_height = height
-
-        if height > self.winfo_height() or width > self.winfo_width():
-            if ratio < 1:
-                new_width = self.winfo_width()
-                new_height = int(new_width * ratio)
-            else:
-                new_height = self.winfo_height()
-                new_width = int(new_height * (width / height))
-
-        self.shown_image = cv2.resize(image, (new_width, new_height))
-        self.shown_image = ImageTk.PhotoImage(Image.fromarray(self.shown_image))
-
-        self.ratio = height / new_height
-
-        self.canvas.config(width=new_width, height=new_height)
-        self.canvas.create_image(new_width / 2, new_height / 2, anchor=CENTER, image=self.shown_image)
-
-
-
-    def activate_crop(self):
-        self.canvas.bind("<ButtonPress>", self.start_crop)
-        self.canvas.bind("<B1-Motion>", self.crop)
-        self.canvas.bind("<ButtonRelease>", self.end_crop)
-
-        self.master.is_crop_state = True
-
-    def activate_zoom(self):
-       self.canvas.bind("<ButtonPress>",self.start_zoom())
-
-
-
-    def deactivate_crop(self):
-        self.canvas.unbind("<ButtonPress>")
-        self.canvas.unbind("<B1-Motion>")
-        self.canvas.unbind("<ButtonRelease>")
-
-        self.master.is_crop_state = False
-
-
-    def start_crop(self, event):
-        self.crop_start_x = event.x
-        self.crop_start_y = event.y
-
-    def crop(self, event):
-        if self.rectangle_id:
-            self.canvas.delete(self.rectangle_id)
-
-        self.crop_end_x = event.x
-        self.crop_end_y = event.y
-
-        self.rectangle_id = self.canvas.create_rectangle(self.crop_start_x, self.crop_start_y,
-                                                         self.crop_end_x, self.crop_end_y, width=1)
-
-    def end_crop(self, event):
-        if self.crop_start_x <= self.crop_end_x and self.crop_start_y <= self.crop_end_y:
-            start_x = int(self.crop_start_x * self.ratio)
-            start_y = int(self.crop_start_y * self.ratio)
-            end_x = int(self.crop_end_x * self.ratio)
-            end_y = int(self.crop_end_y * self.ratio)
-        elif self.crop_start_x > self.crop_end_x and self.crop_start_y <= self.crop_end_y:
-            start_x = int(self.crop_end_x * self.ratio)
-            start_y = int(self.crop_start_y * self.ratio)
-            end_x = int(self.crop_start_x * self.ratio)
-            end_y = int(self.crop_end_y * self.ratio)
-        elif self.crop_start_x <= self.crop_end_x and self.crop_start_y > self.crop_end_y:
-            start_x = int(self.crop_start_x * self.ratio)
-            start_y = int(self.crop_end_y * self.ratio)
-            end_x = int(self.crop_end_x * self.ratio)
-            end_y = int(self.crop_start_y * self.ratio)
-        else:
-            start_x = int(self.crop_end_x * self.ratio)
-            start_y = int(self.crop_end_y * self.ratio)
-            end_x = int(self.crop_start_x * self.ratio)
-            end_y = int(self.crop_start_y * self.ratio)
-
-        x = slice(start_x, end_x, 1)
-        y = slice(start_y, end_y, 1)
-
-        self.master.processed_image = self.master.processed_image[y, x]
-
-        self.show_image()
-
-    def clear_canvas(self):
-        self.canvas.delete("all")
-
-    def clear_draw(self):
-        self.canvas.delete(self.draw_ids)
-
-    def start_zoom(self):
-        pass
-
-class Main(tk.Tk):
-
-    def __init__(self):
-        tk.Tk.__init__(self)
-
-        self.filename = ""
-        self.original_image = None
-        self.processed_image = None
-        self.is_image_selected = False
-        self.is_draw_state = False
-        self.is_crop_state = False
-
-        self.filter_frame = None
-        self.adjust_frame = None
-
-        self.title("Image Editor")
-
-        self.editbar = EditBar(master=self)
-        separator1 = ttk.Separator(master=self, orient=tk.HORIZONTAL)
-        self.image_viewer = ImageViewer(master=self)
-
-        self.editbar.pack(pady=10)
-        separator1.pack(fill=tk.X, padx=20, pady=5)
-        self.image_viewer.pack(fill=tk.BOTH, padx=20, pady=10, expand=1)
-root = Main()
-root.mainloop()
+from tkinter import *
+from collections import deque
+from numpy import mean
+from tkinter import filedialog as fd
+from PIL import Image, ImageTk, ImageDraw, ImageFilter
+
+Font_tuple = ("Champagne & Limousines", 12, "bold")
+
+save_button = None
+undo_button = None
+redo_button = None
+crop_button = None
+brightness_button = None
+contrast_button = None
+RGB_button = None
+flip_button = None
+mirror_button = None
+rotate_button = None
+draw_button = None
+blur_button = None
+gray_button = None
+filter_button = None
+negative_button = None
+
+
+def grayscale(canvas):
+    canvas.data.undoQueue.append(canvas.data.image.copy())
+    check_deque(canvas)
+    pix = canvas.data.image.load()
+
+    for x in range(canvas.data.image.size[0]):
+        for y in range(canvas.data.image.size[1]):
+            pix[x, y] = tuple([round(0.299 * pix[x, y][0] + 0.587 * pix[x, y][1] + 0.114 * pix[x, y][2])] * 3)
+
+    canvas.data.imageForTk = makeImageForTk(canvas)
+    drawImage(canvas)
+
+
+def save(canvas):
+    im = canvas.data.image
+    im.save(canvas.data.imageLocation)
+
+
+def check_deque(canvas):
+    global undo_button
+    global redo_button
+    if len(canvas.data.undoQueue) > 0:
+        undo_button.config(state=NORMAL)
+    else:
+        undo_button.config(state=DISABLED)
+
+    if len(canvas.data.redoQueue) > 0:
+        redo_button.config(state=NORMAL)
+    else:
+        redo_button.config(state=DISABLED)
+
+
+def undo(canvas):
+    canvas.data.redoQueue.append(canvas.data.image.copy())
+    canvas.data.image = canvas.data.undoQueue.pop()
+    canvas.data.imageForTk = makeImageForTk(canvas)
+    drawImage(canvas)
+    check_deque(canvas)
+
+
+def redo(canvas):
+    canvas.data.undoQueue.append(canvas.data.image.copy())
+    canvas.data.image = canvas.data.redoQueue.pop()
+    canvas.data.imageForTk = makeImageForTk(canvas)
+    drawImage(canvas)
+    check_deque(canvas)
+
+
+def blur(canvas):
+    blurWindow = Toplevel(canvas.data.mainWindow)
+    blurWindow.attributes('-toolwindow', True)
+    blurWindow.title("Set Blurness")
+    blurnessSlider = Scale(blurWindow, from_=5, to=100, orient=HORIZONTAL, label="Blurness")
+    blurnessSlider.pack()
+    OkBlurButton = Button(blurWindow, text="OK", command=lambda: startBlur(canvas, blurnessSlider.get(), blurWindow))
+    OkBlurButton.pack(side=BOTTOM)
+
+
+def startBlur(canvas, blurness, blurWindow):
+    canvas.data.blurCropEnable = True
+    blurWindow.destroy()
+    canvas.data.mainWindow.bind("<ButtonPress-1>", lambda event: startBlurCrop(event, canvas))
+    canvas.data.mainWindow.bind("<B1-Motion>", lambda event: drawBlurCrop(event, canvas))
+    canvas.data.mainWindow.bind("<ButtonRelease-1>", lambda event: endBlurCrop(event, canvas, blurness))
+
+
+def startBlurCrop(event, canvas):
+    if canvas.data.blurCropEnable == True:
+        canvas.data.startCropX = event.x
+        canvas.data.startCropY = event.y
+
+
+def drawBlurCrop(event, canvas):
+    if canvas.data.blurCropEnable == True:
+        canvas.data.tempCropX = event.x
+        canvas.data.tempCropY = event.y
+        print(str(canvas.data.startCropX) + " " + str(canvas.data.startCropY) + " " + str(
+            canvas.data.tempCropX) + " " + str(canvas.data.tempCropY))
+        canvas.create_rectangle(canvas.data.startCropX, canvas.data.startCropY, canvas.data.tempCropX,
+                                canvas.data.tempCropY, fill="gray", stipple="gray12", width=0)
+
+
+def endBlurCrop(event, canvas, blurness):
+    if canvas.data.blurCropEnable == True:
+        canvas.data.endCrop = True
+        canvas.data.endCropX = event.x
+        canvas.data.endCropY = event.y
+        canvas.create_rectangle(canvas.data.startCropX, canvas.data.startCropY, canvas.data.endCropX,
+                                canvas.data.endCropY, fill="gray", stipple="gray12", width=0)
+        canvas.data.blurCropEnable = False
+        canvas.data.mainWindow.bind("<Return>", lambda event: performBlur(event, canvas, blurness))
+
+
+def performBlur(event, canvas, blurness):
+    canvas.data.undoQueue.append(canvas.data.image.copy())
+    check_deque(canvas)
+    pix = canvas.data.image.load()
+    for y in range(int(round((canvas.data.startCropY - canvas.data.imageTopY) * canvas.data.imageScale)),
+                   int(round((canvas.data.endCropY - canvas.data.imageTopY) * canvas.data.imageScale))):
+        for x in range(int(round((canvas.data.startCropX - canvas.data.imageTopX) * canvas.data.imageScale)),
+                       int(round((canvas.data.endCropX - canvas.data.imageTopX) * canvas.data.imageScale))):
+            square_cut = []
+            for x_f in range(x, x + blurness):
+                for y_f in range(y, y + blurness):
+                    square_cut.append(pix[x_f, y_f])
+
+            mean_result = tuple(tuple(map(int, tuple(map(mean, zip(*square_cut))))))
+            print(str(x) + " " + str(y))
+            print(mean_result)
+            pix[x, y] = mean_result
+
+    canvas.data.imageForTk = makeImageForTk(canvas)
+    drawImage(canvas)
+
+
+def closeRGBWindow(canvas, state=1):
+    if state == 0:
+        canvas.data.image = canvas.data.recentBeforeChange
+        canvas.data.imageForTk = makeImageForTk(canvas)
+        drawImage(canvas)
+    else:
+        canvas.data.undoQueue.append(canvas.data.recentBeforeChange.copy())
+        check_deque(canvas)
+    canvas.data.RGBWindowClose = True
+
+
+def RGB(canvas):
+    canvas.data.recentBeforeChange = canvas.data.image
+    RGBWindow = Toplevel(canvas.data.mainWindow)
+    RGBWindow.attributes('-toolwindow', True)
+    RGBWindow.protocol('WM_DELETE_WINDOW', lambda: closeRGBWindow(canvas, 0))
+    RGBWindow.title("RGB")
+    redSlider = Scale(RGBWindow, from_=-100, to=100, orient=HORIZONTAL, label="R")
+    redSlider.pack()
+    blueSlider = Scale(RGBWindow, from_=-100, to=100, orient=HORIZONTAL, label="B")
+    blueSlider.pack()
+    greenSlider = Scale(RGBWindow, from_=-100, to=100, orient=HORIZONTAL, label="G")
+    greenSlider.pack()
+    OkRGBFrame = Frame(RGBWindow)
+    OkRGBButton = Button(OkRGBFrame, text="OK", command=lambda: closeRGBWindow(canvas))
+    OkRGBButton.grid(row=0, column=0)
+    OkRGBFrame.pack(side=BOTTOM)
+    initialRGB = (0, 0, 0)
+    changeColours(canvas, redSlider, blueSlider, greenSlider, RGBWindow, initialRGB)
+
+
+def changeColours(canvas, redSlider, blueSlider, greenSlider, RGBWindow, previousRGB):
+    if canvas.data.RGBWindowClose == True:
+        RGBWindow.destroy()
+        canvas.data.RGBWindowClose = False
+    else:
+        if canvas.data.image != None and RGBWindow.winfo_exists():
+            sliderValR = redSlider.get()
+            sliderValG = greenSlider.get()
+            sliderValB = blueSlider.get()
+            currentRGB = (sliderValR, sliderValG, sliderValB)
+            if currentRGB != previousRGB:
+                R, G, B = canvas.data.recentBeforeChange.split()
+                R = R.point(lambda i: i + int(round(i * sliderValR / 100.0)))
+                G = G.point(lambda i: i + int(round(i * sliderValG / 100.0)))
+                B = B.point(lambda i: i + int(round(i * sliderValB / 100.0)))
+                canvas.data.image = Image.merge(canvas.data.recentBeforeChange.mode, (R, G, B))
+                canvas.data.imageForTk = makeImageForTk(canvas)
+                drawImage(canvas)
+            canvas.after(200, lambda: changeColours(canvas, redSlider, blueSlider, greenSlider, RGBWindow, currentRGB))
+
+
+def transpose(canvas):
+    canvas.data.undoQueue.append(canvas.data.image.copy())
+    imageData = list(canvas.data.image.getdata())
+    newData = []
+    newimg = Image.new(canvas.data.image.mode, (canvas.data.image.size[1], canvas.data.image.size[0]))
+    for i in range(canvas.data.image.size[0]):
+        addrow = []
+        for j in range(i, len(imageData), canvas.data.image.size[0]):
+            addrow.append(imageData[j])
+        addrow.reverse()
+        newData += addrow
+    newimg.putdata(newData)
+    canvas.data.image = newimg.copy()
+    check_deque(canvas)
+    canvas.data.imageForTk = makeImageForTk(canvas)
+    drawImage(canvas)
+
+
+def crop(canvas, crop_button):
+    if not hasattr(canvas.data, 'cropEnable') or canvas.data.cropEnable == False:
+        crop_button.config(text="Stop Crop", fg="black", background="white")
+        canvas.data.cropEnable = True
+        canvas.data.mainWindow.bind("<ButtonPress-1>", lambda event: startCrop(event, canvas))
+        canvas.data.mainWindow.bind("<B1-Motion>", lambda event: drawCrop(event, canvas))
+        canvas.data.mainWindow.bind("<ButtonRelease-1>", lambda event: endCrop(event, canvas))
+    else:
+        crop_button.config(text="Crop", fg="white", background="black")
+        canvas.data.cropEnable = False
+
+
+def startCrop(event, canvas):
+    if canvas.data.cropEnable == True:
+        canvas.data.startCropX = event.x
+        canvas.data.startCropY = event.y
+
+
+def drawCrop(event, canvas):
+    if canvas.data.cropEnable == True:
+        canvas.data.tempCropX = event.x
+        canvas.data.tempCropY = event.y
+        print(str(canvas.data.startCropX) + " " + str(canvas.data.startCropY) + " " + str(
+            canvas.data.tempCropX) + " " + str(canvas.data.tempCropY))
+        canvas.create_rectangle(canvas.data.startCropX, canvas.data.startCropY, canvas.data.tempCropX,
+                                canvas.data.tempCropY, fill="gray", stipple="gray12", width=0)
+
+
+def endCrop(event, canvas):
+    if canvas.data.cropEnable == True:
+        canvas.data.endCropX = event.x
+        canvas.data.endCropY = event.y
+        canvas.create_rectangle(canvas.data.startCropX, canvas.data.startCropY, canvas.data.endCropX,
+                                canvas.data.endCropY, fill="gray", stipple="gray12", width=0)
+        canvas.data.mainWindow.bind("<Return>", lambda event: performCrop(event, canvas))
+
+
+def performCrop(event, canvas):
+    canvas.data.undoQueue.append(canvas.data.image.copy())
+    canvas.data.image = \
+        canvas.data.image.crop( \
+            (int(round((canvas.data.startCropX - canvas.data.imageTopX) * canvas.data.imageScale)),
+             int(round((canvas.data.startCropY - canvas.data.imageTopY) * canvas.data.imageScale)),
+             int(round((canvas.data.endCropX - canvas.data.imageTopX) * canvas.data.imageScale)),
+             int(round((canvas.data.endCropY - canvas.data.imageTopY) * canvas.data.imageScale))))
+    check_deque(canvas)
+    canvas.data.imageForTk = makeImageForTk(canvas)
+    drawImage(canvas)
+
+
+def drawOnImage(canvas):
+    drawWindow = Toplevel(canvas.data.mainWindow)
+    drawWindow.title = "Draw"
+    drawFrame = Frame(drawWindow)
+    redButton = Button(drawFrame, bg="red", width=2, command=lambda: colourChosen(drawWindow, canvas, "red"))
+    redButton.grid(row=0, column=0)
+    blueButton = Button(drawFrame, bg="blue", width=2, command=lambda: colourChosen(drawWindow, canvas, "blue"))
+    blueButton.grid(row=0, column=1)
+    greenButton = Button(drawFrame, bg="green", width=2, command=lambda: colourChosen(drawWindow, canvas, "green"))
+    greenButton.grid(row=0, column=2)
+    magentaButton = Button(drawFrame, bg="magenta", width=2,
+                           command=lambda: colourChosen(drawWindow, canvas, "magenta"))
+    magentaButton.grid(row=1, column=0)
+    cyanButton = Button(drawFrame, bg="cyan", width=2, command=lambda: colourChosen(drawWindow, canvas, "cyan"))
+    cyanButton.grid(row=1, column=1)
+    yellowButton = Button(drawFrame, bg="yellow", width=2, command=lambda: colourChosen(drawWindow, canvas, "yellow"))
+    yellowButton.grid(row=1, column=2)
+    orangeButton = Button(drawFrame, bg="orange", width=2, command=lambda: colourChosen(drawWindow, canvas, "orange"))
+    orangeButton.grid(row=2, column=0)
+    purpleButton = Button(drawFrame, bg="purple", width=2, command=lambda: colourChosen(drawWindow, canvas, "purple"))
+    purpleButton.grid(row=2, column=1)
+    brownButton = Button(drawFrame, bg="brown", width=2, command=lambda: colourChosen(drawWindow, canvas, "brown"))
+    brownButton.grid(row=2, column=2)
+    blackButton = Button(drawFrame, bg="black", width=2, command=lambda: colourChosen(drawWindow, canvas, "black"))
+    blackButton.grid(row=3, column=0)
+    whiteButton = Button(drawFrame, bg="white", width=2, command=lambda: colourChosen(drawWindow, canvas, "white"))
+    whiteButton.grid(row=3, column=1)
+    grayButton = Button(drawFrame, bg="gray", width=2, command=lambda: colourChosen(drawWindow, canvas, "gray"))
+    grayButton.grid(row=3, column=2)
+    drawFrame.pack(side=BOTTOM)
+
+
+def colourChosen(drawWindow, canvas, colour):
+    canvas.data.drawColour = colour
+    canvas.data.mainWindow.bind("<B1-Motion>", lambda event: drawDraw(event, canvas))
+    drawWindow.destroy()
+
+
+def drawDraw(event, canvas):
+    x = int(round((event.x - canvas.data.imageTopX) * canvas.data.imageScale))
+    y = int(round((event.y - canvas.data.imageTopY) * canvas.data.imageScale))
+    draw = ImageDraw.Draw(canvas.data.image)
+    draw.ellipse((x - 10, y - 10, x + 10, y + 10), fill=canvas.data.drawColour, outline=None)
+    canvas.data.undoQueue.append(canvas.data.image.copy())
+    check_deque(canvas)
+    canvas.data.imageForTk = makeImageForTk(canvas)
+    drawImage(canvas)
+
+
+def flip(canvas):
+    canvas.data.undoQueue.append(canvas.data.image.copy())
+    tmp_pix = canvas.data.image.copy()
+    tmp_pix = tmp_pix.load()
+    pix = canvas.data.image.load()
+    for y in range(canvas.data.image.size[1]):
+        for x in range(canvas.data.image.size[0]):
+            pix[x, y] = tmp_pix[canvas.data.image.size[0] - x - 1, y]
+    check_deque(canvas)
+    canvas.data.imageForTk = makeImageForTk(canvas)
+    drawImage(canvas)
+
+
+def mirror(canvas):
+    canvas.data.undoQueue.append(canvas.data.image.copy())
+    tmp_pix = canvas.data.image.copy()
+    tmp_pix = tmp_pix.load()
+    pix = canvas.data.image.load()
+    for x in range(canvas.data.image.size[0]):
+        for y in range(canvas.data.image.size[1]):
+            pix[x, y] = tmp_pix[x, canvas.data.image.size[1] - y - 1]
+    check_deque(canvas)
+    canvas.data.imageForTk = makeImageForTk(canvas)
+    drawImage(canvas)
+
+
+def changeContrast(canvas, contrastWindow, contrastSlider, previousVal):
+    if canvas.data.contrastWindowClose == True:
+        contrastWindow.destroy()
+        canvas.data.contrastWindowClose = False
+    else:
+        sliderVal = contrastSlider.get()
+        if (previousVal != sliderVal):
+            canvas.data.image = canvas.data.recentBeforeChange.point(
+                lambda i: int(round(128 + (259 * (sliderVal + 255)) / (255 * (259 - sliderVal)) * (i - 128))))
+            canvas.data.imageForTk = makeImageForTk(canvas)
+            drawImage(canvas)
+        canvas.after(200, lambda: changeContrast(canvas, contrastWindow, contrastSlider, sliderVal))
+
+
+def closeContrastWindow(canvas, state=1):
+    if state == 0:
+        canvas.data.image = canvas.data.recentBeforeChange
+        canvas.data.imageForTk = makeImageForTk(canvas)
+        drawImage(canvas)
+    else:
+        canvas.data.undoQueue.append(canvas.data.recentBeforeChange.copy())
+        check_deque(canvas)
+    canvas.data.contrastWindowClose = True
+
+
+def contrast(canvas):
+    canvas.data.recentBeforeChange = canvas.data.image
+    contrastWindow = Toplevel(canvas.data.mainWindow)
+    contrastWindow.attributes('-toolwindow', True)
+    contrastWindow.protocol('WM_DELETE_WINDOW', lambda: closeContrastWindow(canvas, 0))
+    contrastWindow.title("Contrast")
+    contrastSlider = Scale(contrastWindow, from_=-100, to=100, orient=HORIZONTAL)
+    contrastSlider.pack()
+
+    OkContrastFrame = Frame(contrastWindow)
+    OkContrastButton = Button(OkContrastFrame, text="OK", command=lambda: closeContrastWindow(canvas))
+    OkContrastButton.grid(row=0, column=0)
+    OkContrastFrame.pack(side=BOTTOM)
+    changeContrast(canvas, contrastWindow, contrastSlider, 0)
+    contrastSlider.set(0)
+
+
+def changeBrightness(canvas, brightnessWindow, brightnessSlider, previousVal):
+    if canvas.data.brightnessWindowClose == True:
+        brightnessWindow.destroy()
+        canvas.data.brightnessWindowClose = False
+    else:
+        sliderVal = brightnessSlider.get()
+        if (previousVal != sliderVal):
+            canvas.data.image = canvas.data.recentBeforeChange.point(lambda i: i + int(round(i * sliderVal / 100.0)))
+            canvas.data.imageForTk = makeImageForTk(canvas)
+            drawImage(canvas)
+        canvas.after(200, lambda: changeBrightness(canvas, brightnessWindow, brightnessSlider, sliderVal))
+
+
+def closeBrightnessWindow(canvas, state=1):
+    if state == 0:
+        canvas.data.image = canvas.data.recentBeforeChange
+        canvas.data.imageForTk = makeImageForTk(canvas)
+        drawImage(canvas)
+    else:
+        canvas.data.undoQueue.append(canvas.data.recentBeforeChange.copy())
+        check_deque(canvas)
+    canvas.data.brightnessWindowClose = True
+
+
+def brightness(canvas):
+    canvas.data.recentBeforeChange = canvas.data.image
+    brightnessWindow = Toplevel(canvas.data.mainWindow)
+    brightnessWindow.attributes('-toolwindow', True)
+    brightnessWindow.protocol('WM_DELETE_WINDOW', lambda: closeBrightnessWindow(canvas, 0))
+    brightnessWindow.title("Brightness")
+    brightnessSlider = Scale(brightnessWindow, from_=-100, to=100, orient=HORIZONTAL)
+    brightnessSlider.pack()
+    OkBrightnessFrame = Frame(brightnessWindow)
+    OkBrightnessButton = Button(OkBrightnessFrame, text="OK", command=lambda: closeBrightnessWindow(canvas))
+    OkBrightnessButton.grid(row=0, column=0)
+    OkBrightnessFrame.pack(side=BOTTOM)
+    changeBrightness(canvas, brightnessWindow, brightnessSlider, 0)
+    brightnessSlider.set(0)
+
+
+def makeImageForTk(canvas):
+    im = canvas.data.image
+
+    imageWidth = canvas.data.image.size[0]
+    imageHeight = canvas.data.image.size[1]
+    if imageWidth > imageHeight:
+        resizedImage = im.resize((canvas.data.width, int(round(float(imageHeight) * canvas.data.width / imageWidth))))
+        canvas.data.imageScale = float(imageWidth) / canvas.data.width
+    else:
+        resizedImage = im.resize((int(round(float(imageWidth) * canvas.data.height / imageHeight)), canvas.data.height))
+        canvas.data.imageScale = float(imageHeight) / canvas.data.height
+    canvas.data.resizedIm = resizedImage
+    return ImageTk.PhotoImage(resizedImage)
+
+
+def drawImage(canvas):
+    canvas.data.imageTopX = int(round(canvas.data.width / 2.0 - canvas.data.resizedIm.size[0] / 2.0))
+    canvas.data.imageTopY = int(round(canvas.data.height / 2.0 - canvas.data.resizedIm.size[1] / 2.0))
+    canvas.create_image(canvas.data.imageTopX, canvas.data.imageTopY, image=canvas.data.imageForTk, anchor=NW)
+
+
+def open_image(canvas):
+    global save_button
+    global crop_button
+    global brightness_button
+    global contrast_button
+    global RGB_button
+    global flip_button
+    global mirror_button
+    global rotate_button
+    global draw_button
+    global blur_button
+    global filter_button
+
+    img_location = fd.askopenfilename(title="Select file",
+                                      filetypes=(("Image files", "*.jpg *.png"), ("all files", "*.*")))
+    img = Image.open(img_location)
+    canvas.data.imageLocation = img_location
+    canvas.data.image = img
+    canvas.data.originalImage = img.copy()
+    # canvas.data.undoQueue.append(img.copy())
+    canvas.data.imageSize = img.size
+    canvas.data.imageForTk = makeImageForTk(canvas)
+    drawImage(canvas)
+
+    save_button.config(state=NORMAL)
+    crop_button.config(state=NORMAL)
+    brightness_button.config(state=NORMAL)
+    contrast_button.config(state=NORMAL)
+    RGB_button.config(state=NORMAL)
+    flip_button.config(state=NORMAL)
+    mirror_button.config(state=NORMAL)
+    rotate_button.config(state=NORMAL)
+    draw_button.config(state=NORMAL)
+    blur_button.config(state=NORMAL)
+    gray_button.config(state=NORMAL)
+    filter_button.config(state=NORMAL)
+    negative_button.config(state=NORMAL)
+
+
+def init_canvas(root):
+    canvasWidth = 1280
+    canvasHeight = 720
+    canvas = Canvas(root, width=canvasWidth, height=canvasHeight, background="#282828", highlightthickness=0,
+                    relief='ridge')
+
+    class Struct: pass
+
+    canvas.data = Struct()
+    canvas.data.width = canvasWidth
+    canvas.data.height = canvasHeight
+    canvas.data.undoQueue = deque([], 10)
+    canvas.data.redoQueue = deque([], 10)
+    canvas.data.mainWindow = root
+
+    canvas.data.brightnessWindowClose = False
+    canvas.data.contrastWindowClose = False
+    canvas.data.RGBWindowClose = False
+
+    return canvas
+
+
+def create_button(_frame, _btn_name, _btn_command, _side="left", _width=12):
+    init_button = Button(_frame, text=_btn_name, fg="white", background="black", width=_width, height=1,
+                         command=_btn_command, font=Font_tuple)
+    init_button.pack(side=_side)
+    return init_button
+
+
+def filter_with_lib(canvas, filter):
+    canvas.data.undoQueue.append(canvas.data.image.copy())
+    check_deque(canvas)
+    canvas.data.image = canvas.data.image.filter(filter)
+    canvas.data.imageForTk = makeImageForTk(canvas)
+    drawImage(canvas)
+
+
+def extra_filter(canvas):
+    blurWindow = Toplevel(canvas.data.mainWindow)
+    blurWindow.attributes('-toolwindow', True)
+    blurWindow.title("Extra Filter")
+    create_button(blurWindow, "BoxBlur", lambda: filter_with_lib(canvas, ImageFilter.BoxBlur(2)), "top", 20)
+    create_button(blurWindow, "GaussianBlur", lambda: filter_with_lib(canvas, ImageFilter.GaussianBlur(radius=5)),
+                  "top", 20)
+    create_button(blurWindow, "MedianFilter", lambda: filter_with_lib(canvas, ImageFilter.MedianFilter(size=3)), "top",
+                  20)
+    create_button(blurWindow, "MinFilter", lambda: filter_with_lib(canvas, ImageFilter.MinFilter(size=3)), "top", 20)
+    create_button(blurWindow, "MaxFilter", lambda: filter_with_lib(canvas, ImageFilter.MaxFilter(size=3)), "top", 20)
+    create_button(blurWindow, "BLUR", lambda: filter_with_lib(canvas, ImageFilter.BLUR), "top", 20)
+    create_button(blurWindow, "CONTOUR", lambda: filter_with_lib(canvas, ImageFilter.CONTOUR), "top", 20)
+    create_button(blurWindow, "DETAIL", lambda: filter_with_lib(canvas, ImageFilter.DETAIL), "top", 20)
+    create_button(blurWindow, "EDGE_ENHANCE", lambda: filter_with_lib(canvas, ImageFilter.EDGE_ENHANCE), "top", 20)
+    create_button(blurWindow, "EDGE_ENHANCE_MORE", lambda: filter_with_lib(canvas, ImageFilter.EDGE_ENHANCE_MORE),
+                  "top", 20)
+    create_button(blurWindow, "EMBOSS", lambda: filter_with_lib(canvas, ImageFilter.EMBOSS), "top", 20)
+    create_button(blurWindow, "FIND_EDGES", lambda: filter_with_lib(canvas, ImageFilter.FIND_EDGES), "top", 20)
+    create_button(blurWindow, "SMOOTH", lambda: filter_with_lib(canvas, ImageFilter.SMOOTH), "top", 20)
+    create_button(blurWindow, "SMOOTH_MORE", lambda: filter_with_lib(canvas, ImageFilter.SMOOTH_MORE), "top", 20)
+    create_button(blurWindow, "SHARPEN", lambda: filter_with_lib(canvas, ImageFilter.SHARPEN), "top", 20)
+
+
+def negative_filter(canvas):
+    canvas.data.image = canvas.data.image.point(lambda i: 255 - i)
+    canvas.data.imageForTk = makeImageForTk(canvas)
+    drawImage(canvas)
+
+
+def init_buttons(root, canvas):
+    global save_button
+    global undo_button
+    global redo_button
+    global crop_button
+    global brightness_button
+    global contrast_button
+    global RGB_button
+    global flip_button
+    global mirror_button
+    global rotate_button
+    global draw_button
+    global blur_button
+    global gray_button
+    global filter_button
+    global negative_button
+    menuKitFrame = Frame(root)
+    create_button(menuKitFrame, "Open", lambda: open_image(canvas))
+    save_button = create_button(menuKitFrame, "Save", lambda: save(canvas))
+    undo_button = create_button(menuKitFrame, "Undo", lambda: undo(canvas))
+    redo_button = create_button(menuKitFrame, "Redo", lambda: redo(canvas))
+    menuKitFrame.pack(side=TOP)
+
+    toolKitFrame = Frame(root)
+    crop_button = create_button(toolKitFrame, "Crop", lambda: crop(canvas, crop_button))
+    brightness_button = create_button(toolKitFrame, "Brightness", lambda: brightness(canvas))
+    contrast_button = create_button(toolKitFrame, "Contrast", lambda: contrast(canvas))
+    RGB_button = create_button(toolKitFrame, "RGB", lambda: RGB(canvas))
+    gray_button = create_button(toolKitFrame, "Gray", lambda: grayscale(canvas))
+    negative_button = create_button(toolKitFrame, "Negative", lambda: negative_filter(canvas))
+    flip_button = create_button(toolKitFrame, "Flip Horizontal", lambda: flip(canvas))
+    mirror_button = create_button(toolKitFrame, "Flip Vertically", lambda: mirror(canvas))
+    rotate_button = create_button(toolKitFrame, "Rotate", lambda: transpose(canvas))
+    draw_button = create_button(toolKitFrame, "Draw", lambda: drawOnImage(canvas))
+    blur_button = create_button(toolKitFrame, "Blur Crop", lambda: blur(canvas))
+    filter_button = create_button(toolKitFrame, "Extra Filter", lambda: extra_filter(canvas))
+
+    toolKitFrame.pack(side=BOTTOM)
+    save_button.config(state="disabled")
+    undo_button.config(state="disabled")
+    redo_button.config(state="disabled")
+    crop_button.config(state="disabled")
+    brightness_button.config(state="disabled")
+    contrast_button.config(state="disabled")
+    RGB_button.config(state="disabled")
+    flip_button.config(state="disabled")
+    mirror_button.config(state="disabled")
+    rotate_button.config(state="disabled")
+    draw_button.config(state="disabled")
+    blur_button.config(state="disabled")
+    gray_button.config(state="disabled")
+    filter_button.config(state="disabled")
+    negative_button.config(state="disabled")
+
+
+def run():
+    root = Tk()
+    root.configure(background='#282828')
+    root.geometry("1280x720")
+    root.title("Image Editor")
+    canvas = init_canvas(root)
+    init_buttons(root, canvas)
+    canvas.pack()
+    root.mainloop()
+
+
+run()
