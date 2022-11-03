@@ -1,4 +1,4 @@
-from tkinter import Toplevel, Label, Scale, Button, HORIZONTAL, RIGHT,Frame, Canvas, CENTER, ROUND, Frame, Button, LEFT, filedialog, ttk
+from tkinter import Toplevel, Label, Scale, Button, HORIZONTAL, RIGHT,Frame, Canvas, CENTER, ROUND, Frame, Button, LEFT, filedialog, ttk, colorchooser
 import cv2
 import numpy as np
 from PIL import Image, ImageTk
@@ -179,6 +179,8 @@ class FilterFrame(Toplevel):
 
     def close(self):
         self.destroy()
+
+
 class EditBar(Frame):
 
     def __init__(self, master=None):
@@ -323,10 +325,45 @@ class EditBar(Frame):
                     self.master.image_viewer.deactivate_draw()
                 if self.master.is_crop_state:
                     self.master.image_viewer.deactivate_crop()
-        else:
-            self.master.image_viewer.activate_zoom()
 
-class ImageViewer(Frame):
+
+class Draw(Toplevel):
+
+    def __int__(self, master=None):
+        self.color = colorchooser.askcolor()
+        Toplevel.__init__(self, master=master)
+
+
+    '''def activate_draw(self):
+        self.canvas.bind("<ButtonPress>", self.start_draw)
+        self.canvas.bind("<B1-Motion>", self.draw)
+
+        self.master.is_draw_state = True
+
+    def deactivate_draw(self):
+        self.canvas.unbind("<ButtonPress>")
+        self.canvas.unbind("<B1-Motion>")
+
+        self.master.is_draw_state = False
+
+    def start_draw(self, event):
+        self.x = event.x
+        self.y = event.y
+
+    def draw(self, event):
+        self.draw_ids.append(self.canvas.create_line(self.x, self.y, event.x, event.y, width=2,
+                                                     fill=self.color, capstyle=ROUND, smooth=True))
+
+        cv2.line(self.master.processed_image, (int(self.x * self.ratio), int(self.y * self.ratio)),
+                 (int(event.x * self.ratio), int(event.y * self.ratio)),
+                 (0, 0, 255), thickness=int(self.ratio * 2),
+                 lineType=8)
+
+        self.x = event.x
+        self.y = event.y'''
+
+
+class ImageViewer(Frame, Draw):
 
     def __init__(self, master=None):
         Frame.__init__(self, master=master, bg="gray", width=600, height=400)
@@ -376,11 +413,7 @@ class ImageViewer(Frame):
         self.canvas.config(width=new_width, height=new_height)
         self.canvas.create_image(new_width / 2, new_height / 2, anchor=CENTER, image=self.shown_image)
 
-    def activate_draw(self):
-        self.canvas.bind("<ButtonPress>", self.start_draw)
-        self.canvas.bind("<B1-Motion>", self.draw)
 
-        self.master.is_draw_state = True
 
     def activate_crop(self):
         self.canvas.bind("<ButtonPress>", self.start_crop)
@@ -390,13 +423,9 @@ class ImageViewer(Frame):
         self.master.is_crop_state = True
 
     def activate_zoom(self):
-       pass
+       self.canvas.bind("<ButtonPress>",self.start_zoom())
 
-    def deactivate_draw(self):
-        self.canvas.unbind("<ButtonPress>")
-        self.canvas.unbind("<B1-Motion>")
 
-        self.master.is_draw_state = False
 
     def deactivate_crop(self):
         self.canvas.unbind("<ButtonPress>")
@@ -405,24 +434,6 @@ class ImageViewer(Frame):
 
         self.master.is_crop_state = False
 
-    def deactivate_zoom(self):
-        pass
-
-    def start_draw(self, event):
-        self.x = event.x
-        self.y = event.y
-
-    def draw(self, event):
-        self.draw_ids.append(self.canvas.create_line(self.x, self.y, event.x, event.y, width=2,
-                                                     fill="red", capstyle=ROUND, smooth=True))
-
-        cv2.line(self.master.processed_image, (int(self.x * self.ratio), int(self.y * self.ratio)),
-                 (int(event.x * self.ratio), int(event.y * self.ratio)),
-                 (0, 0, 255), thickness=int(self.ratio * 2),
-                 lineType=8)
-
-        self.x = event.x
-        self.y = event.y
 
     def start_crop(self, event):
         self.crop_start_x = event.x
